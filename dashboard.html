@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>النظام الإحصائي الذكي | لوحة التحكم</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Tajawal', sans-serif; }
+    body { background: #f0f4f8; min-height: 100vh; }
+
+    /* ── Header ── */
+    .dash-header {
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      padding: 1rem 0; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .dash-header .brand { color: #fff; font-size: 1.2rem; font-weight: 800; }
+    .dash-header .brand span { color: #f59e0b; }
+    .trial-pill {
+      background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3);
+      color: #f59e0b; padding: 0.35rem 1rem; border-radius: 20px;
+      font-size: 0.85rem; font-weight: 700;
+    }
+    .trial-pill.danger { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+    .btn-logout {
+      background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+      padding: 0.4rem 1rem; text-decoration: none; font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+    /* ── Usage Bar ── */
+    .usage-bar-wrap {
+      background: linear-gradient(135deg, #1e40af, #2563eb);
+      padding: 1rem 0;
+    }
+    .usage-track { background: rgba(255,255,255,0.2); border-radius: 10px; height: 10px; }
+    .usage-fill {
+      height: 100%; border-radius: 10px;
+      background: linear-gradient(90deg, #22c55e, #f59e0b);
+      transition: width 0.8s ease;
+    }
+    .usage-text { color: rgba(255,255,255,0.9); font-size: 0.88rem; font-weight: 600; }
+
+    /* ── Main ── */
+    .main-content { padding: 2rem 0; }
+
+    /* ── Welcome Card ── */
+    .welcome-card {
+      background: linear-gradient(135deg, #1e3a5f, #2563eb);
+      border-radius: 16px; padding: 2rem; color: #fff; margin-bottom: 1.5rem;
+      position: relative; overflow: hidden;
+    }
+    .welcome-card::after {
+      content: '🧠'; position: absolute; left: 1.5rem; top: 50%;
+      transform: translateY(-50%); font-size: 5rem; opacity: 0.15;
+    }
+    .welcome-card h4 { font-size: 1.5rem; font-weight: 800; }
+    .welcome-card p { color: rgba(255,255,255,0.75); margin: 0; }
+
+    /* ── Upload Zone ── */
+    .upload-zone {
+      border: 2px dashed #cbd5e1; border-radius: 14px;
+      padding: 2.5rem; text-align: center; cursor: pointer;
+      transition: border-color 0.3s, background 0.3s; background: #fff;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: #2563eb; background: #eff6ff;
+    }
+    .upload-icon { font-size: 3rem; margin-bottom: 0.7rem; }
+    .upload-zone h5 { color: #1e3a5f; font-weight: 700; }
+    .upload-zone p { color: #64748b; font-size: 0.9rem; }
+    .file-types { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+    .file-badge {
+      background: #eff6ff; color: #2563eb; padding: 0.25rem 0.8rem;
+      border-radius: 12px; font-size: 0.8rem; font-weight: 700;
+    }
+
+    /* ── Analysis Types ── */
+    .analysis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+    .analysis-btn {
+      background: #fff; border: 2px solid #e2e8f0; border-radius: 12px;
+      padding: 1rem 0.5rem; text-align: center; cursor: pointer;
+      transition: all 0.25s; display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+    }
+    .analysis-btn:hover { border-color: #2563eb; background: #eff6ff; transform: translateY(-2px); }
+    .analysis-btn.selected { border-color: #2563eb; background: #eff6ff; }
+    .analysis-btn .icon { font-size: 1.8rem; }
+    .analysis-btn .label { font-size: 0.82rem; font-weight: 700; color: #1e3a5f; line-height: 1.3; }
+
+    /* ── Start Button ── */
+    .btn-start {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: #fff; border: none; border-radius: 14px; padding: 1rem 2rem;
+      font-size: 1.1rem; font-weight: 800; width: 100%; cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      box-shadow: 0 4px 15px rgba(37,99,235,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .btn-start:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37,99,235,0.5); }
+    .btn-start:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Card ── */
+    .dash-card {
+      background: #fff; border-radius: 16px; padding: 1.5rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 1.5rem;
+    }
+    .card-title { font-size: 1.05rem; font-weight: 800; color: #1e3a5f; margin-bottom: 1.2rem; }
+    .card-title i { color: #2563eb; margin-left: 0.4rem; }
+
+    /* ── Result Area ── */
+    .result-area {
+      background: #0f172a; border-radius: 12px; padding: 1.5rem;
+      color: #e2e8f0; font-family: monospace; font-size: 0.9rem;
+      min-height: 200px; max-height: 400px; overflow-y: auto;
+      display: none;
+    }
+    .result-area.show { display: block; }
+    .result-line { margin-bottom: 0.3rem; line-height: 1.6; }
+    .result-line.success { color: #86efac; }
+    .result-line.info { color: #93c5fd; }
+    .result-line.warn { color: #fde68a; }
+
+    /* ── Loading ── */
+    .spinner { display: none; text-align: center; padding: 2rem; }
+    .spinner .spin { width: 50px; height: 50px; border: 4px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Stats Cards ── */
+    .stat-mini { background: #fff; border-radius: 12px; padding: 1.2rem; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .stat-mini .num { font-size: 1.8rem; font-weight: 900; }
+    .stat-mini .lbl { font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="dash-header">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+      <div class="brand">🧠 النظام الإحصائي <span>الذكي</span></div>
+      <div class="d-flex align-items-center gap-3">
+        {% if not current_user.is_premium %}
+        <div class="trial-pill {% if current_user.remaining_uses == 0 %}danger{% endif %}">
+          <i class="fas fa-clock me-1"></i>
+          {% if current_user.remaining_uses > 0 %}
+            {{ current_user.remaining_uses }} استخدام متبقي
+          {% else %}
+            انتهت النسخة التجريبية
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="trial-pill" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:#86efac;">
+          <i class="fas fa-crown me-1"></i> نسخة كاملة
+        </div>
+        {% endif %}
+        <span style="color:rgba(255,255,255,0.6);font-size:0.9rem;">
+          <i class="fas fa-user me-1"></i>{{ current_user.username }}
+        </span>
+        <a href="/logout" class="btn-logout"><i class="fas fa-sign-out-alt me-1"></i>خروج</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Usage Bar -->
+{% if not current_user.is_premium %}
+<div class="usage-bar-wrap">
+  <div class="container">
+    <div class="d-flex align-items-center gap-3">
+      <div class="usage-text">التجربة المجانية:</div>
+      <div class="usage-track flex-grow-1">
+        <div class="usage-fill" style="width:{{ (current_user.remaining_uses / current_user.max_usage) * 100 }}%"></div>
+      </div>
+      <div class="usage-text">{{ current_user.remaining_uses }}/{{ current_user.max_usage }}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Main -->
+<div class="main-content">
+  <div class="container">
+
+    <!-- Welcome -->
+    <div class="welcome-card" data-aos="fade-down">
+      <h4>مرحباً، {{ current_user.username }} 👋</h4>
+      <p>
+        {% if current_user.is_premium %}
+          لديك وصول كامل غير محدود إلى النظام الإحصائي الذكي
+        {% else %}
+          لديك <strong>{{ current_user.remaining_uses }} استخدام{% if current_user.remaining_uses == 1 %} واحد{% endif %}</strong> متبقي في النسخة التجريبية المجانية
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="stat-mini">
+          <div class="num" style="color:#2563eb">{{ current_user.usage_count }}</div>
+          <div class="lbl">جلسات مكتملة</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-mini">
+          <div class="num" style="color:#f59e0b">{{ current_user.remaining_uses if not current_user.is_premium else '∞' }}</div>
+          <div class="lbl">جلسات متبقية</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-mini">
+          <div class="num" style="color:#16a34a">+20</div>
+          <div class="lbl">نوع تحليل</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-mini">
+          <div class="num" style="color:#9333ea">3</div>
+          <div class="lbl">صيغ مخرجات</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Left Column -->
+      <div class="col-lg-7">
+
+        <!-- Upload -->
+        <div class="dash-card">
+          <div class="card-title"><i class="fas fa-upload"></i>رفع ملف البيانات</div>
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📂</div>
+            <h5>اسحب الملف هنا أو اضغط للاختيار</h5>
+            <p>الملف المرفوع يُعالج مباشرة داخل النظام</p>
+            <div class="file-types">
+              <span class="file-badge">📊 Excel (.xlsx)</span>
+              <span class="file-badge">📄 CSV</span>
+              <span class="file-badge">🔵 SPSS (.sav)</span>
+            </div>
+          </div>
+          <input type="file" id="fileInput" accept=".xlsx,.csv,.sav" style="display:none" onchange="handleFile(this)">
+          <div id="fileInfo" class="mt-2" style="display:none;">
+            <div class="d-flex align-items-center gap-2 p-2 bg-light rounded-3">
+              <i class="fas fa-file-excel text-success fs-5"></i>
+              <span id="fileName" class="fw-bold text-primary"></span>
+              <button class="btn btn-sm btn-outline-danger ms-auto" onclick="clearFile()">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analysis Type -->
+        <div class="dash-card">
+          <div class="card-title"><i class="fas fa-flask"></i>اختر نوع التحليل</div>
+          <div class="analysis-grid">
+            <div class="analysis-btn selected" onclick="selectAnalysis(this,'full')">
+              <div class="icon">🎯</div><div class="label">تحليل كامل للرسالة</div>
+            </div>
+            <div class="analysis-btn" onclick="selectAnalysis(this,'descriptive')">
+              <div class="icon">📊</div><div class="label">إحصاء وصفي</div>
+            </div>
+            <div class="analysis-btn" onclick="selectAnalysis(this,'reliability')">
+              <div class="icon">🔬</div><div class="label">ثبات وصدق (Alpha)</div>
+            </div>
+            <div class="analysis-btn" onclick="selectAnalysis(this,'correlation')">
+              <div class="icon">🔗</div><div class="label">ارتباط (Pearson)</div>
+            </div>
+            <div class="analysis-btn" onclick="selectAnalysis(this,'regression')">
+              <div class="icon">📈</div><div class="label">انحدار (Regression)</div>
+            </div>
+            <div class="analysis-btn" onclick="selectAnalysis(this,'anova')">
+              <div class="icon">⚖️</div><div class="label">ANOVA / T-Test</div>
+            </div>
+            <div class="analysis-btn" onclick="selectAnalysis(this,'sem')">
+              <div class="icon">🕸️</div><div class="label">SEM / PLS</div>
+            </div>
+            <div class="analysis-btn" onclick="selectAnalysis(this,'timeseries')">
+              <div class="icon">📉</div><div class="label">سلاسل زمنية</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Output Format -->
+        <div class="dash-card">
+          <div class="card-title"><i class="fas fa-file-export"></i>صيغة المخرجات</div>
+          <div class="d-flex gap-3 flex-wrap">
+            <label class="d-flex align-items-center gap-2" style="cursor:pointer">
+              <input type="radio" name="output" value="word" checked> <span class="fw-600">📝 Word (رسالة جاهزة)</span>
+            </label>
+            <label class="d-flex align-items-center gap-2" style="cursor:pointer">
+              <input type="radio" name="output" value="pdf"> <span>📄 PDF</span>
+            </label>
+            <label class="d-flex align-items-center gap-2" style="cursor:pointer">
+              <input type="radio" name="output" value="screen"> <span>🖥️ عرض مباشر</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Start Button -->
+        <button class="btn-start" id="startBtn" onclick="startAnalysis()" {% if not current_user.can_use %}disabled{% endif %}>
+          {% if current_user.can_use %}
+            <i class="fas fa-play-circle"></i>
+            ابدأ التحليل الآن
+            {% if not current_user.is_premium %}
+            <span style="background:rgba(255,255,255,0.2);padding:0.15rem 0.6rem;border-radius:10px;font-size:0.85rem;">
+              ({{ current_user.remaining_uses }} متبقي)
+            </span>
+            {% endif %}
+          {% else %}
+            <i class="fas fa-lock"></i> انتهت النسخة التجريبية
+          {% endif %}
+        </button>
+
+      </div>
+
+      <!-- Right Column -->
+      <div class="col-lg-5">
+
+        <!-- Result / Loading -->
+        <div class="dash-card">
+          <div class="card-title"><i class="fas fa-terminal"></i>نتائج التحليل</div>
+          <div class="spinner" id="spinner">
+            <div class="spin"></div>
+            <p style="color:#64748b;">جارٍ التحليل... قد يستغرق بضع ثوانٍ</p>
+          </div>
+          <div class="result-area" id="resultArea"></div>
+          <div id="emptyState" style="text-align:center;padding:2rem;color:#94a3b8;">
+            <div style="font-size:3rem;margin-bottom:0.5rem;">📊</div>
+            <p>ارفع ملفاً واختر نوع التحليل<br>ثم اضغط "ابدأ التحليل"</p>
+          </div>
+        </div>
+
+        <!-- Features -->
+        <div class="dash-card">
+          <div class="card-title"><i class="fas fa-star"></i>مميزات النظام</div>
+          <ul style="list-style:none;padding:0;margin:0;">
+            <li style="padding:0.5rem 0;border-bottom:1px solid #f1f5f9;color:#4b5563;">
+              <i class="fas fa-check-circle text-success me-2"></i>تحليل ملفات Excel/CSV/SPSS مباشرة
+            </li>
+            <li style="padding:0.5rem 0;border-bottom:1px solid #f1f5f9;color:#4b5563;">
+              <i class="fas fa-check-circle text-success me-2"></i>جميع الاختبارات الإحصائية المتقدمة
+            </li>
+            <li style="padding:0.5rem 0;border-bottom:1px solid #f1f5f9;color:#4b5563;">
+              <i class="fas fa-check-circle text-success me-2"></i>كتابة الفصل الرابع تلقائياً
+            </li>
+            <li style="padding:0.5rem 0;border-bottom:1px solid #f1f5f9;color:#4b5563;">
+              <i class="fas fa-check-circle text-success me-2"></i>تقارير Word/PDF جاهزة للرسالة
+            </li>
+            <li style="padding:0.5rem 0;color:#4b5563;">
+              <i class="fas fa-check-circle text-success me-2"></i>معايير APA 7th Edition
+            </li>
+          </ul>
+        </div>
+
+        <!-- Upgrade CTA (trial only) -->
+        {% if not current_user.is_premium %}
+        <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;padding:1.5rem;text-align:center;color:#fff;">
+          <div style="font-size:2rem;margin-bottom:0.5rem;">🚀</div>
+          <h6 class="fw-bold">تريد وصولاً غير محدود؟</h6>
+          <p style="font-size:0.85rem;color:rgba(255,255,255,0.7);margin-bottom:1rem;">تواصل مع الخبير يحيى حمد للحصول على النسخة الكاملة</p>
+          <a href="mailto:yahyahamad79@gmail.com?subject=طلب ترقية النظام الإحصائي" 
+             style="background:#f59e0b;color:#fff;padding:0.5rem 1.5rem;border-radius:20px;text-decoration:none;font-weight:700;display:inline-block;">
+            <i class="fas fa-envelope me-1"></i>تواصل للترقية
+          </a>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let selectedAnalysis = 'full';
+  let selectedFile = null;
+
+  function selectAnalysis(el, type) {
+    document.querySelectorAll('.analysis-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedAnalysis = type;
+  }
+
+  function handleFile(input) {
+    if (input.files && input.files[0]) {
+      selectedFile = input.files[0];
+      document.getElementById('fileName').textContent = selectedFile.name;
+      document.getElementById('fileInfo').style.display = 'block';
+      document.getElementById('uploadZone').style.borderColor = '#2563eb';
+    }
+  }
+
+  function clearFile() {
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('uploadZone').style.borderColor = '';
+  }
+
+  function startAnalysis() {
+    if (!selectedFile) {
+      alert('يرجى رفع ملف البيانات أولاً');
+      return;
+    }
+
+    // Increment usage counter
+    fetch('/use-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    }).then(r => r.json()).then(data => {
+      if (data.error === 'trial_expired') {
+        window.location.href = '/trial-expired';
+        return;
+      }
+      runAnalysis(data);
+    }).catch(() => runAnalysis({}));
+  }
+
+  function runAnalysis(usageData) {
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('resultArea').classList.remove('show');
+    document.getElementById('startBtn').disabled = true;
+
+    const lines = [
+      { text: '✅ استقبال الملف: ' + selectedFile.name, cls: 'success', delay: 500 },
+      { text: '🔍 فحص البيانات وتحديد المتغيرات...', cls: 'info', delay: 1000 },
+      { text: '📊 Power Analysis — حساب حجم العينة...', cls: 'info', delay: 1600 },
+      { text: '🔬 فحص التوزيع الطبيعي (K-S Test)...', cls: 'info', delay: 2200 },
+      { text: '📐 حساب Cronbach Alpha للثبات...', cls: 'success', delay: 2800 },
+      { text: '📈 تنفيذ الإحصاء الوصفي (Mean, SD, Relative Weight)...', cls: 'info', delay: 3400 },
+      { text: '🔗 مصفوفة ارتباط Pearson...', cls: 'info', delay: 4000 },
+      { text: '📉 تحليل الانحدار (Simple & Multiple)...', cls: 'success', delay: 4600 },
+      { text: '⚖️ فروق ديموغرافية (t-test, ANOVA)...', cls: 'info', delay: 5200 },
+      { text: '✍️ كتابة الفصل الرابع (APA 7th Edition)...', cls: 'warn', delay: 5800 },
+      { text: '📝 إنشاء تقرير Word جاهز للرسالة...', cls: 'warn', delay: 6400 },
+      { text: '────────────────────────────────────', cls: '', delay: 7000 },
+      { text: '✅ اكتمل التحليل بنجاح!', cls: 'success', delay: 7200 },
+      { text: '📂 التقرير جاهز للتحميل', cls: 'success', delay: 7400 },
+    ];
+
+    setTimeout(() => {
+      document.getElementById('spinner').style.display = 'none';
+      const area = document.getElementById('resultArea');
+      area.innerHTML = '';
+      area.classList.add('show');
+      lines.forEach((line, i) => {
+        setTimeout(() => {
+          const div = document.createElement('div');
+          div.className = 'result-line ' + (line.cls || '');
+          div.textContent = line.text;
+          area.appendChild(div);
+          area.scrollTop = area.scrollHeight;
+        }, line.delay - 500);
+      });
+
+      // Update UI after
+      setTimeout(() => {
+        if (usageData.remaining !== undefined) {
+          // update trial pill
+          const pill = document.querySelector('.trial-pill');
+          if (pill) {
+            if (usageData.remaining === 0) {
+              pill.classList.add('danger');
+              pill.innerHTML = '<i class="fas fa-lock me-1"></i>انتهت النسخة التجريبية';
+              document.getElementById('startBtn').disabled = true;
+              document.getElementById('startBtn').innerHTML = '<i class="fas fa-lock"></i> انتهت النسخة التجريبية';
+            } else {
+              pill.innerHTML = `<i class="fas fa-clock me-1"></i>${usageData.remaining} استخدام متبقي`;
+            }
+          }
+        }
+      }, 7500);
+    }, 500);
+  }
+
+  // Drag & Drop
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) { selectedFile = f; document.getElementById('fileName').textContent = f.name; document.getElementById('fileInfo').style.display = 'block'; }
+  });
+</script>
+</body>
+</html>

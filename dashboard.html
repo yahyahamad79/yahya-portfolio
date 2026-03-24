@@ -332,6 +332,33 @@
             <div style="font-size:3rem;margin-bottom:0.5rem;">📊</div>
             <p>ارفع ملفاً واختر نوع التحليل<br>ثم اضغط "ابدأ التحليل"</p>
           </div>
+          <!-- زر التحميل -->
+          <div id="downloadSection" style="display:none;margin-top:1rem;">
+            <button id="downloadBtn" style="width:100%;padding:.85rem;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:12px;font-size:1.05rem;font-weight:800;font-family:'Tajawal',sans-serif;cursor:pointer;">
+              <i class="fas fa-download me-2"></i>تحميل تقرير Word الكامل
+            </button>
+          </div>
+        </div>
+
+        <!-- جدول الإحصاء الوصفي -->
+        <div id="tableSection" class="dash-card" style="display:none;">
+          <div class="card-title"><i class="fas fa-table"></i>جدول الإحصاء الوصفي</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+              <thead>
+                <tr style="background:#f0f4f8;">
+                  <th style="padding:.6rem;text-align:right;border:1px solid #e2e8f0;">المتغير</th>
+                  <th style="padding:.6rem;text-align:center;border:1px solid #e2e8f0;">N</th>
+                  <th style="padding:.6rem;text-align:center;border:1px solid #e2e8f0;">المتوسط</th>
+                  <th style="padding:.6rem;text-align:center;border:1px solid #e2e8f0;">الانحراف</th>
+                  <th style="padding:.6rem;text-align:center;border:1px solid #e2e8f0;">Min</th>
+                  <th style="padding:.6rem;text-align:center;border:1px solid #e2e8f0;">Max</th>
+                  <th style="padding:.6rem;text-align:center;border:1px solid #e2e8f0;">الوزن%</th>
+                </tr>
+              </thead>
+              <tbody id="descTableBody"></tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Features -->
@@ -407,75 +434,127 @@
       return;
     }
 
-    // Increment usage counter
-    fetch('/use-session', {
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('resultArea').classList.remove('show');
+    document.getElementById('downloadSection').style.display = 'none';
+    document.getElementById('tableSection').style.display = 'none';
+    document.getElementById('startBtn').disabled = true;
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('analysis_type', selectedAnalysis);
+
+    fetch('/analyze', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    }).then(r => r.json()).then(data => {
+      body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('spinner').style.display = 'none';
+
       if (data.error === 'trial_expired') {
         window.location.href = '/trial-expired';
         return;
       }
-      runAnalysis(data);
-    }).catch(() => runAnalysis({}));
-  }
 
-  function runAnalysis(usageData) {
-    document.getElementById('emptyState').style.display = 'none';
-    document.getElementById('spinner').style.display = 'block';
-    document.getElementById('resultArea').classList.remove('show');
-    document.getElementById('startBtn').disabled = true;
+      if (data.error) {
+        showError(data.message || 'حدث خطأ في التحليل');
+        document.getElementById('startBtn').disabled = false;
+        return;
+      }
 
-    const lines = [
-      { text: '✅ استقبال الملف: ' + selectedFile.name, cls: 'success', delay: 500 },
-      { text: '🔍 فحص البيانات وتحديد المتغيرات...', cls: 'info', delay: 1000 },
-      { text: '📊 Power Analysis — حساب حجم العينة...', cls: 'info', delay: 1600 },
-      { text: '🔬 فحص التوزيع الطبيعي (K-S Test)...', cls: 'info', delay: 2200 },
-      { text: '📐 حساب Cronbach Alpha للثبات...', cls: 'success', delay: 2800 },
-      { text: '📈 تنفيذ الإحصاء الوصفي (Mean, SD, Relative Weight)...', cls: 'info', delay: 3400 },
-      { text: '🔗 مصفوفة ارتباط Pearson...', cls: 'info', delay: 4000 },
-      { text: '📉 تحليل الانحدار (Simple & Multiple)...', cls: 'success', delay: 4600 },
-      { text: '⚖️ فروق ديموغرافية (t-test, ANOVA)...', cls: 'info', delay: 5200 },
-      { text: '✍️ كتابة الفصل الرابع (APA 7th Edition)...', cls: 'warn', delay: 5800 },
-      { text: '📝 إنشاء تقرير Word جاهز للرسالة...', cls: 'warn', delay: 6400 },
-      { text: '────────────────────────────────────', cls: '', delay: 7000 },
-      { text: '✅ اكتمل التحليل بنجاح!', cls: 'success', delay: 7200 },
-      { text: '📂 التقرير جاهز للتحميل', cls: 'success', delay: 7400 },
-    ];
-
-    setTimeout(() => {
-      document.getElementById('spinner').style.display = 'none';
+      // عرض النتائج
       const area = document.getElementById('resultArea');
       area.innerHTML = '';
       area.classList.add('show');
-      lines.forEach((line, i) => {
+
+      (data.summary || []).forEach((line, i) => {
         setTimeout(() => {
           const div = document.createElement('div');
-          div.className = 'result-line ' + (line.cls || '');
-          div.textContent = line.text;
+          div.className = 'result-line ' + getLineClass(line);
+          div.textContent = line;
           area.appendChild(div);
           area.scrollTop = area.scrollHeight;
-        }, line.delay - 500);
+        }, i * 120);
       });
 
-      // Update UI after
-      setTimeout(() => {
-        if (usageData.remaining !== undefined) {
-          // update trial pill
-          const pill = document.querySelector('.trial-pill');
-          if (pill) {
-            if (usageData.remaining === 0) {
-              pill.classList.add('danger');
-              pill.innerHTML = '<i class="fas fa-lock me-1"></i>انتهت النسخة التجريبية';
-              document.getElementById('startBtn').disabled = true;
-              document.getElementById('startBtn').innerHTML = '<i class="fas fa-lock"></i> انتهت النسخة التجريبية';
-            } else {
-              pill.innerHTML = `<i class="fas fa-clock me-1"></i>${usageData.remaining} استخدام متبقي`;
-            }
-          }
+      // زر التحميل
+      if (data.report_key) {
+        setTimeout(() => {
+          const dl = document.getElementById('downloadSection');
+          dl.style.display = 'block';
+          document.getElementById('downloadBtn').onclick = () => {
+            window.location.href = '/download-report/' + data.report_key;
+          };
+        }, (data.summary || []).length * 120 + 300);
+      }
+
+      // جدول الإحصاء الوصفي
+      if (data.tables && data.tables.descriptive) {
+        setTimeout(() => showDescriptiveTable(data.tables), (data.summary || []).length * 120 + 500);
+      }
+
+      // تحديث شارة الاستخدام
+      if (data.remaining !== undefined) {
+        updateUsagePill(data.remaining);
+        const btn = document.getElementById('startBtn');
+        if (data.remaining > 0) {
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fas fa-play-circle"></i> ابدأ تحليلاً جديداً <span style="background:rgba(255,255,255,0.2);padding:.15rem .6rem;border-radius:10px;font-size:.85rem;">(${data.remaining} متبقي)</span>`;
+        } else {
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-lock"></i> انتهت النسخة التجريبية';
         }
-      }, 7500);
-    }, 500);
+      }
+    })
+    .catch(err => {
+      document.getElementById('spinner').style.display = 'none';
+      showError('خطأ في الاتصال بالخادم: ' + err.message);
+      document.getElementById('startBtn').disabled = false;
+    });
+  }
+
+  function getLineClass(line) {
+    if (line.startsWith('✅')) return 'success';
+    if (line.startsWith('❌')) return 'error';
+    if (line.startsWith('📝') || line.startsWith('⬇️')) return 'warn';
+    return 'info';
+  }
+
+  function showError(msg) {
+    const area = document.getElementById('resultArea');
+    area.innerHTML = `<div class="result-line" style="color:#fca5a5">❌ ${msg}</div>`;
+    area.classList.add('show');
+  }
+
+  function updateUsagePill(remaining) {
+    const pill = document.querySelector('.trial-pill');
+    if (!pill) return;
+    if (remaining === 0) {
+      pill.classList.add('danger');
+      pill.innerHTML = '<i class="fas fa-lock me-1"></i>انتهت النسخة التجريبية';
+    } else {
+      pill.innerHTML = `<i class="fas fa-clock me-1"></i>${remaining} استخدام متبقي`;
+    }
+  }
+
+  function showDescriptiveTable(tables) {
+    const sec = document.getElementById('tableSection');
+    const tbody = document.getElementById('descTableBody');
+    tbody.innerHTML = '';
+    (tables.descriptive || []).forEach(row => {
+      tbody.innerHTML += `<tr>
+        <td>${row.variable}</td>
+        <td>${row.n}</td>
+        <td><strong>${row.mean}</strong></td>
+        <td>${row.std}</td>
+        <td>${row.min}</td>
+        <td>${row.max}</td>
+        <td><span style="color:#2563eb;font-weight:700">${row.rw}</span></td>
+      </tr>`;
+    });
+    sec.style.display = 'block';
   }
 
   // Drag & Drop
